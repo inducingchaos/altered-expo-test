@@ -1,9 +1,12 @@
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
-import { Capsule, GlassSurface, Metric, SectionLabel, Surface } from '@/components/altered/ui';
+import * as Haptics from 'expo-haptics';
+
+import { Capsule, Metric, SectionLabel, Separator, Surface } from '@/components/altered/ui';
 import { SwipeTabScreen } from '@/components/altered/swipe-tab-screen';
 import { useAltered } from '@/features/altered/store';
 import type { AppearanceMode } from '@/features/altered/types';
+import { monoFont } from '@/features/theme/palette';
 import { useAppTheme } from '@/features/theme/provider';
 
 const modes: AppearanceMode[] = ['system', 'light', 'dark'];
@@ -16,65 +19,75 @@ export default function MoreScreen() {
     <SwipeTabScreen index={4}>
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={{ padding: 16, paddingBottom: 48, gap: 12 }}
+        contentContainerStyle={{ padding: 12, paddingBottom: 40, gap: 10 }}
         style={{ flex: 1, backgroundColor: palette.background }}
       >
-        <GlassSurface>
-          <View style={{ padding: 18, gap: 14 }}>
-            <View style={{ gap: 6 }}>
-              <SectionLabel>Preferences</SectionLabel>
-              <Text selectable style={{ color: palette.text, fontSize: 28, fontWeight: '500', letterSpacing: -0.6 }}>
-                Configure the shell without adding noise.
-              </Text>
-            </View>
-
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 18 }}>
-              <Metric label="Appearance" value={state.appearanceMode} />
-              <Metric label="Thoughts" value={`${state.thoughts.length}`} />
-              <Metric label="Validations" value={`${state.validations.length}`} />
-            </View>
-          </View>
-        </GlassSurface>
+        <View style={{ flexDirection: 'row', gap: 16, paddingVertical: 4, paddingHorizontal: 4 }}>
+          <Metric label="Appearance" value={state.appearanceMode} />
+          <Metric label="Thoughts" value={`${state.thoughts.length}`} />
+          <Metric label="Validations" value={`${state.validations.length}`} />
+        </View>
 
         <Surface>
-          <View style={{ padding: 16, gap: 12 }}>
-            <SectionLabel>Dark Mode</SectionLabel>
-            <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+          <View style={{ paddingHorizontal: 12, paddingTop: 10, paddingBottom: 6 }}>
+            <SectionLabel>Appearance</SectionLabel>
+          </View>
+          <View style={{ paddingHorizontal: 12, paddingBottom: 10 }}>
+            <View style={{ flexDirection: 'row', gap: 6 }}>
               {modes.map((mode) => (
-                <Capsule key={mode} label={mode} selected={state.appearanceMode === mode} onPress={() => setAppearanceMode(mode)} />
+                <Capsule
+                  key={mode}
+                  label={mode}
+                  selected={state.appearanceMode === mode}
+                  onPress={() => {
+                    setAppearanceMode(mode);
+                    void Haptics.selectionAsync();
+                  }}
+                />
               ))}
             </View>
           </View>
         </Surface>
 
         <Surface>
-          <View style={{ padding: 16, gap: 12 }}>
+          <View style={{ paddingHorizontal: 12, paddingTop: 10, paddingBottom: 6 }}>
             <SectionLabel>Environment</SectionLabel>
-            <PreferenceRow label="Liquid glass" value="Enabled where available" />
-            <PreferenceRow label="Thought storage" value="Shared in-memory model" />
-            <PreferenceRow label="Navigation" value="Native tabs plus horizontal swipe" />
           </View>
+          <PreferenceRow label="Liquid glass" value="Enabled where available" />
+          <Separator />
+          <PreferenceRow label="Thought storage" value="Shared in-memory model" />
+          <Separator />
+          <PreferenceRow label="Navigation" value="Native tabs + swipe" />
         </Surface>
 
         <Surface>
-          <View style={{ padding: 16, gap: 12 }}>
-            <SectionLabel>Future Preferences</SectionLabel>
-            <PreferenceRow label="Account" value="Not connected yet" />
-            <PreferenceRow label="Sync" value="Pending networking layer" />
-            <PreferenceRow label="Exports" value="Structured systems only" />
+          <View style={{ paddingHorizontal: 12, paddingTop: 10, paddingBottom: 6 }}>
+            <SectionLabel>Account</SectionLabel>
+          </View>
+          <PreferenceRow label="Status" value="Not connected" />
+          <Separator />
+          <PreferenceRow label="Sync" value="Pending networking layer" />
+          <Separator />
+          <PreferenceRow label="Exports" value="Structured systems only" />
+          <View style={{ padding: 10 }}>
             <Pressable
-              onPress={() => setAppearanceMode('system')}
-              style={{
-                paddingVertical: 12,
-                borderRadius: 14,
+              onPress={() => {
+                setAppearanceMode('system');
+                void Haptics.selectionAsync();
+              }}
+              style={({ pressed }) => ({
+                paddingVertical: 9,
+                borderRadius: 4,
                 borderCurve: 'continuous',
                 borderWidth: 1,
                 borderColor: palette.border,
                 alignItems: 'center',
-                backgroundColor: palette.accentSoft,
-              }}
+                opacity: pressed ? 0.6 : 1,
+              })}
             >
-              <Text selectable style={{ color: palette.text, fontSize: 14 }}>Reset to system appearance</Text>
+              <Text style={{ color: palette.textMuted, fontSize: 12, fontFamily: monoFont }}>
+                Reset to system appearance
+              </Text>
             </Pressable>
           </View>
         </Surface>
@@ -89,18 +102,18 @@ function PreferenceRow({ label, value }: { label: string; value: string }) {
   return (
     <View
       style={{
-        paddingBottom: 10,
-        borderBottomWidth: 1,
-        borderColor: palette.border,
+        paddingHorizontal: 12,
+        paddingVertical: 9,
         flexDirection: 'row',
         justifyContent: 'space-between',
+        alignItems: 'center',
         gap: 12,
       }}
     >
-      <Text selectable style={{ color: palette.text, fontSize: 15, flex: 1 }}>
+      <Text selectable style={{ color: palette.text, fontSize: 13, flex: 1 }}>
         {label}
       </Text>
-      <Text selectable style={{ color: palette.textSoft, fontSize: 13 }}>
+      <Text selectable style={{ color: palette.textSoft, fontSize: 11, fontFamily: monoFont }}>
         {value}
       </Text>
     </View>

@@ -2,8 +2,18 @@ import { Stack } from 'expo-router';
 
 export default function KaiLayout() {
   return (
-    <Stack>
-      <Stack.Screen name="index" options={{ title: 'kAI', headerLargeTitle: true }} />
+    <Stack
+      screenOptions={{
+        headerLargeTitle: true,
+        headerTransparent: true,
+        headerBlurEffect: 'prominent',
+        headerShadowVisible: false,
+        headerLargeTitleShadowVisible: false,
+        headerLargeStyle: { backgroundColor: 'transparent' },
+        headerBackButtonDisplayMode: 'minimal',
+      }}
+    >
+      <Stack.Screen name="index" options={{ title: 'kAI' }} />
     </Stack>
   );
 }

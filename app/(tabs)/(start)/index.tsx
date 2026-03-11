@@ -1,12 +1,19 @@
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
+import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 
-import { Capsule, DataText, GlassSurface, Metric, SectionLabel, Surface } from '@/components/altered/ui';
+import { Metric, Row, SectionLabel, Separator, Surface } from '@/components/altered/ui';
 import { SwipeTabScreen } from '@/components/altered/swipe-tab-screen';
 import { useAltered } from '@/features/altered/store';
 import { monoFont } from '@/features/theme/palette';
 import { useAppTheme } from '@/features/theme/provider';
+
+const statusColor: Record<string, string> = {
+  pending: 'rgb(200, 180, 100)',
+  clear: 'rgb(80, 170, 120)',
+  flagged: 'rgb(210, 100, 90)',
+};
 
 export default function StartScreen() {
   const { palette } = useAppTheme();
@@ -16,92 +23,110 @@ export default function StartScreen() {
     <SwipeTabScreen index={0}>
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={{ padding: 16, paddingBottom: 48, gap: 12 }}
+        contentContainerStyle={{ padding: 12, paddingBottom: 40, gap: 10 }}
         style={{ flex: 1, backgroundColor: palette.background }}
       >
-        <GlassSurface>
-          <View style={{ padding: 18, gap: 16 }}>
-            <View style={{ gap: 6 }}>
-              <SectionLabel>Start Surface</SectionLabel>
-              <Text selectable style={{ color: palette.text, fontSize: 30, fontWeight: '500', letterSpacing: -0.8 }}>
-                Minimal command center for queue, validations, and shortcuts.
-              </Text>
-            </View>
-
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 18 }}>
-              <Metric label="Queue" value={`${queueThoughts.length}`} />
-              <Metric label="Validations" value={`${state.validations.length}`} />
-              <Metric label="Shortcuts" value={`${state.shortcuts.length}`} />
-            </View>
-          </View>
-        </GlassSurface>
+        <View style={{ flexDirection: 'row', gap: 16, paddingVertical: 4, paddingHorizontal: 4 }}>
+          <Metric label="Queue" value={`${queueThoughts.length}`} />
+          <Metric label="Validations" value={`${state.validations.length}`} />
+          <Metric label="Shortcuts" value={`${state.shortcuts.length}`} />
+        </View>
 
         <Surface>
-          <View style={{ padding: 16, gap: 12 }}>
+          <View style={{ paddingHorizontal: 12, paddingTop: 10, paddingBottom: 4 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
               <SectionLabel>Task Queue</SectionLabel>
-              <DataText>{queueThoughts.length} in motion</DataText>
+              <Text style={{ color: palette.textSoft, fontSize: 10, fontFamily: monoFont }}>
+                {queueThoughts.length} in motion
+              </Text>
             </View>
-            {queueThoughts.map((thought) => (
-              <View key={thought.id} style={{ gap: 6, paddingBottom: 12, borderBottomWidth: 1, borderColor: palette.border }}>
-                <Text selectable style={{ color: palette.text, fontSize: 16, fontWeight: '500' }}>
-                  {thought.title}
-                </Text>
-                <Text selectable style={{ color: palette.textMuted, fontSize: 13 }}>
-                  {thought.body}
-                </Text>
-                <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
-                  <Capsule label={thought.status} selected />
-                  {thought.datasets.slice(0, 2).map((dataset) => (
-                    <Capsule key={dataset} label={dataset} />
-                  ))}
-                </View>
-              </View>
-            ))}
           </View>
+          {queueThoughts.map((thought) => (
+            <Row
+              key={thought.id}
+              title={thought.title}
+              subtitle={thought.body}
+              trailing={thought.datasets[0]}
+              trailingMuted={thought.status}
+              badge={thought.pinned ? 'pinned' : undefined}
+              onPress={() => {
+                router.navigate('/(tabs)/(brain)');
+                void Haptics.selectionAsync();
+              }}
+            />
+          ))}
+          {queueThoughts.length === 0 ? (
+            <View style={{ padding: 12 }}>
+              <Text style={{ color: palette.textSoft, fontSize: 12, fontFamily: monoFont }}>No active work.</Text>
+            </View>
+          ) : null}
         </Surface>
 
         <Surface>
-          <View style={{ padding: 16, gap: 12 }}>
+          <View style={{ paddingHorizontal: 12, paddingTop: 10, paddingBottom: 6 }}>
             <SectionLabel>Validations</SectionLabel>
-            {state.validations.map((validation) => (
-              <View key={validation.id} style={{ gap: 4 }}>
-                <Text selectable style={{ color: palette.text, fontSize: 15, fontWeight: '500' }}>
-                  {validation.label}
-                </Text>
-                <Text selectable style={{ color: palette.textMuted, fontSize: 13 }}>{validation.detail}</Text>
-                <Text selectable style={{ color: palette.textSoft, fontSize: 12, fontFamily: monoFont }}>
+          </View>
+          {state.validations.map((validation, index) => (
+            <View key={validation.id}>
+              <View style={{ paddingHorizontal: 12, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <View
+                  style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: 3,
+                    backgroundColor: statusColor[validation.status] ?? palette.textSoft,
+                  }}
+                />
+                <View style={{ flex: 1, gap: 1 }}>
+                  <Text selectable style={{ color: palette.text, fontSize: 13, fontWeight: '500' }}>
+                    {validation.label}
+                  </Text>
+                  <Text selectable numberOfLines={1} style={{ color: palette.textMuted, fontSize: 11 }}>
+                    {validation.detail}
+                  </Text>
+                </View>
+                <Text style={{ color: palette.textSoft, fontSize: 10, fontFamily: monoFont, textTransform: 'uppercase' }}>
                   {validation.status}
                 </Text>
               </View>
-            ))}
-          </View>
+              {index < state.validations.length - 1 ? <Separator /> : null}
+            </View>
+          ))}
         </Surface>
 
         <Surface>
-          <View style={{ padding: 16, gap: 12 }}>
+          <View style={{ paddingHorizontal: 12, paddingTop: 10, paddingBottom: 6 }}>
             <SectionLabel>Shortcuts</SectionLabel>
-            {state.shortcuts.map((shortcut) => (
-              <Pressable
-                key={shortcut.id}
-                onPress={() => router.navigate(shortcut.id === 'chat' ? '/(tabs)/(kai)' : '/(tabs)/(brain)')}
-                style={{
-                  paddingHorizontal: 14,
-                  paddingVertical: 14,
-                  borderRadius: 14,
-                  borderCurve: 'continuous',
-                  borderWidth: 1,
-                  borderColor: palette.border,
-                  backgroundColor: palette.accentSoft,
-                }}
-              >
-                <Text selectable style={{ color: palette.text, fontSize: 15, fontWeight: '500' }}>
-                  {shortcut.label}
-                </Text>
-                <Text selectable style={{ color: palette.textMuted, fontSize: 13 }}>{shortcut.detail}</Text>
-              </Pressable>
-            ))}
           </View>
+          {state.shortcuts.map((shortcut, index) => (
+            <View key={shortcut.id}>
+              <Pressable
+                onPress={() => {
+                  router.navigate(shortcut.id === 'chat' ? '/(tabs)/(kai)' : shortcut.id === 'queue' ? '/(tabs)/(brain)' : '/(tabs)/(brain)');
+                  void Haptics.selectionAsync();
+                }}
+                style={({ pressed }) => ({
+                  paddingHorizontal: 12,
+                  paddingVertical: 9,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 10,
+                  opacity: pressed ? 0.6 : 1,
+                })}
+              >
+                <View style={{ flex: 1, gap: 1 }}>
+                  <Text selectable style={{ color: palette.text, fontSize: 13, fontWeight: '500' }}>
+                    {shortcut.label}
+                  </Text>
+                  <Text selectable numberOfLines={1} style={{ color: palette.textMuted, fontSize: 11 }}>
+                    {shortcut.detail}
+                  </Text>
+                </View>
+                <Text style={{ color: palette.textSoft, fontSize: 12, fontFamily: monoFont }}>→</Text>
+              </Pressable>
+              {index < state.shortcuts.length - 1 ? <Separator /> : null}
+            </View>
+          ))}
         </Surface>
       </ScrollView>
     </SwipeTabScreen>

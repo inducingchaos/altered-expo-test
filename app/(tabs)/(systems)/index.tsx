@@ -1,6 +1,6 @@
 import { ScrollView, Text, View } from 'react-native';
 
-import { DataText, GlassSurface, SectionLabel, Surface } from '@/components/altered/ui';
+import { Row, SectionLabel, Separator, Surface } from '@/components/altered/ui';
 import { SwipeTabScreen } from '@/components/altered/swipe-tab-screen';
 import { useAltered } from '@/features/altered/store';
 import { monoFont } from '@/features/theme/palette';
@@ -14,47 +14,54 @@ export default function SystemsScreen() {
     <SwipeTabScreen index={3}>
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={{ padding: 16, paddingBottom: 48, gap: 12 }}
+        contentContainerStyle={{ padding: 12, paddingBottom: 40, gap: 10 }}
         style={{ flex: 1, backgroundColor: palette.background }}
       >
-        <GlassSurface>
-          <View style={{ padding: 18, gap: 8 }}>
-            <SectionLabel>Systems</SectionLabel>
-            <Text selectable style={{ color: palette.text, fontSize: 28, fontWeight: '500', letterSpacing: -0.6 }}>
-              Different ways to interact with your brain.
-            </Text>
-            <Text selectable style={{ color: palette.textMuted, fontSize: 14 }}>
-              Systems are the leverage layer between stored thought and outbound action.
-            </Text>
-          </View>
-        </GlassSurface>
-
-        {state.systemModes.map((mode) => (
-          <Surface key={mode.id}>
-            <View style={{ padding: 16, gap: 8 }}>
-              <SectionLabel>{mode.name}</SectionLabel>
-              <Text selectable style={{ color: palette.text, fontSize: 17, fontWeight: '500' }}>
-                {mode.description}
-              </Text>
-              <Text selectable style={{ color: palette.textSoft, fontSize: 12, fontFamily: monoFont }}>
-                {mode.command}
-              </Text>
-            </View>
-          </Surface>
-        ))}
+        <View style={{ paddingHorizontal: 4, paddingVertical: 4 }}>
+          <Text style={{ color: palette.textMuted, fontSize: 12 }}>
+            The leverage layer between stored thought and outbound action.
+          </Text>
+        </View>
 
         <Surface>
-          <View style={{ padding: 16, gap: 12 }}>
-            <SectionLabel>Recent Inputs</SectionLabel>
-            {recentThoughts.map((thought) => (
-              <View key={thought.id} style={{ gap: 4 }}>
-                <Text selectable style={{ color: palette.text, fontSize: 15, fontWeight: '500' }}>
-                  {thought.title}
-                </Text>
-                <DataText>{thought.datasets.join(' · ')}</DataText>
-              </View>
-            ))}
+          <View style={{ paddingHorizontal: 12, paddingTop: 10, paddingBottom: 6 }}>
+            <SectionLabel>Available Systems</SectionLabel>
           </View>
+          {state.systemModes.map((mode, index) => (
+            <View key={mode.id}>
+              <View style={{ paddingHorizontal: 12, paddingVertical: 9, gap: 3 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Text selectable style={{ color: palette.text, fontSize: 14, fontWeight: '500' }}>
+                    {mode.name}
+                  </Text>
+                  <Text selectable style={{ color: palette.textSoft, fontSize: 10, fontFamily: monoFont }}>
+                    {mode.command.split(' ')[0]}
+                  </Text>
+                </View>
+                <Text selectable numberOfLines={2} style={{ color: palette.textMuted, fontSize: 12 }}>
+                  {mode.description}
+                </Text>
+                <Text selectable style={{ color: palette.textSoft, fontSize: 10, fontFamily: monoFont, marginTop: 1 }}>
+                  {mode.command}
+                </Text>
+              </View>
+              {index < state.systemModes.length - 1 ? <Separator /> : null}
+            </View>
+          ))}
+        </Surface>
+
+        <Surface>
+          <View style={{ paddingHorizontal: 12, paddingTop: 10, paddingBottom: 6 }}>
+            <SectionLabel>Recent Inputs</SectionLabel>
+          </View>
+          {recentThoughts.map((thought) => (
+            <Row
+              key={thought.id}
+              title={thought.title}
+              trailing={thought.datasets[0]}
+              compact
+            />
+          ))}
         </Surface>
       </ScrollView>
     </SwipeTabScreen>

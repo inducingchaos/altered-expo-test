@@ -1,100 +1,114 @@
 import React from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { FlatList, KeyboardAvoidingView, Pressable, Text, TextInput, View, type ListRenderItemInfo } from 'react-native';
 
-import { DataText, GlassSurface, SectionLabel, Surface } from '@/components/altered/ui';
+import * as Haptics from 'expo-haptics';
+
+import { GlassSurface } from '@/components/altered/ui';
 import { SwipeTabScreen } from '@/components/altered/swipe-tab-screen';
 import { useAltered } from '@/features/altered/store';
+import type { ChatMessage } from '@/features/altered/types';
 import { monoFont } from '@/features/theme/palette';
 import { useAppTheme } from '@/features/theme/provider';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function KaiScreen() {
   const { palette } = useAppTheme();
   const { state, sendChatMessage } = useAltered();
   const [message, setMessage] = React.useState('');
+  const insets = useSafeAreaInsets();
+  const listRef = React.useRef<FlatList<ChatMessage>>(null);
 
   const submit = () => {
+    if (!message.trim()) return;
     sendChatMessage(message);
     setMessage('');
+    void Haptics.selectionAsync();
+    setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
   };
+
+  const renderMessage = ({ item }: ListRenderItemInfo<ChatMessage>) => (
+    <View
+      style={{
+        paddingHorizontal: 14,
+        paddingVertical: 10,
+        gap: 4,
+        backgroundColor: item.role === 'user' ? palette.accentSoft : 'transparent',
+        borderBottomWidth: 1,
+        borderColor: palette.border,
+      }}
+    >
+      <Text style={{ color: palette.textSoft, fontSize: 9, fontFamily: monoFont, textTransform: 'uppercase', letterSpacing: 0.8 }}>
+        {item.role}
+      </Text>
+      <Text selectable style={{ color: palette.text, fontSize: 14, lineHeight: 20 }}>
+        {item.text}
+      </Text>
+    </View>
+  );
 
   return (
     <SwipeTabScreen index={2}>
-      <View style={{ flex: 1, backgroundColor: palette.background }}>
-        <ScrollView
+      <KeyboardAvoidingView style={{ flex: 1, backgroundColor: palette.background }} behavior="padding">
+        <FlatList
+          ref={listRef}
           contentInsetAdjustmentBehavior="automatic"
-          contentContainerStyle={{ padding: 16, paddingBottom: 140, gap: 12 }}
-        >
-          <GlassSurface>
-            <View style={{ padding: 18, gap: 8 }}>
-              <SectionLabel>kAI</SectionLabel>
-              <Text selectable style={{ color: palette.text, fontSize: 28, fontWeight: '500', letterSpacing: -0.6 }}>
-                Direct line into ALTERED.
-              </Text>
-              <Text selectable style={{ color: palette.textMuted, fontSize: 14 }}>
-                Keep chat grounded in stored thought, not detached assistant vibes.
+          data={state.chatMessages}
+          keyExtractor={(item) => item.id}
+          renderItem={renderMessage}
+          keyboardDismissMode="on-drag"
+          ListHeaderComponent={
+            <View style={{ paddingHorizontal: 14, paddingTop: 8, paddingBottom: 12 }}>
+              <Text style={{ color: palette.textMuted, fontSize: 12 }}>
+                Chat grounded in stored thought, not detached assistant vibes.
               </Text>
             </View>
-          </GlassSurface>
-
-          {state.chatMessages.map((messageItem) => (
-            <Surface key={messageItem.id}>
-              <View
-                style={{
-                  padding: 14,
-                  gap: 6,
-                  backgroundColor: messageItem.role === 'assistant' ? palette.panelMuted : palette.accentSoft,
-                }}
-              >
-                <Text selectable style={{ color: palette.textSoft, fontSize: 11, fontFamily: monoFont, textTransform: 'uppercase' }}>
-                  {messageItem.role}
-                </Text>
-                <Text selectable style={{ color: palette.text, fontSize: 15, lineHeight: 22 }}>
-                  {messageItem.text}
-                </Text>
-              </View>
-            </Surface>
-          ))}
-        </ScrollView>
+          }
+          contentContainerStyle={{ paddingBottom: 8 }}
+          style={{ flex: 1 }}
+        />
 
         <GlassSurface>
-          <View style={{ padding: 12, gap: 10 }}>
-            <TextInput
-              value={message}
-              onChangeText={setMessage}
-              placeholder="Ask ALTERED about thoughts, systems, or next actions"
-              placeholderTextColor={palette.textSoft}
-              multiline
-              style={{
-                minHeight: 54,
-                maxHeight: 110,
-                borderRadius: 14,
-                borderCurve: 'continuous',
-                borderWidth: 1,
-                borderColor: palette.border,
-                paddingHorizontal: 14,
-                paddingVertical: 12,
-                color: palette.text,
-                backgroundColor: palette.chrome,
-                fontSize: 14,
-              }}
-            />
-            <Pressable
-              onPress={submit}
-              style={{
-                alignItems: 'center',
-                borderRadius: 14,
-                borderCurve: 'continuous',
-                paddingVertical: 12,
-                backgroundColor: palette.accentSoft,
-                borderWidth: 1,
-                borderColor: palette.borderStrong,
-              }}
-            >
-              <DataText>Send to ALTERED</DataText>
-            </Pressable>
+          <View style={{ paddingHorizontal: 10, paddingTop: 8, paddingBottom: Math.max(8, insets.bottom - 48), gap: 8 }}>
+            <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-end' }}>
+              <TextInput
+                value={message}
+                onChangeText={setMessage}
+                placeholder="Ask ALTERED..."
+                placeholderTextColor={palette.textSoft}
+                multiline
+                style={{
+                  flex: 1,
+                  minHeight: 36,
+                  maxHeight: 88,
+                  borderRadius: 4,
+                  borderCurve: 'continuous',
+                  borderWidth: 1,
+                  borderColor: palette.border,
+                  paddingHorizontal: 10,
+                  paddingVertical: 8,
+                  color: palette.text,
+                  backgroundColor: palette.chrome,
+                  fontSize: 13,
+                }}
+              />
+              <Pressable
+                onPress={submit}
+                style={({ pressed }) => ({
+                  borderRadius: 4,
+                  borderCurve: 'continuous',
+                  paddingHorizontal: 14,
+                  paddingVertical: 10,
+                  backgroundColor: pressed ? palette.accentSoft : palette.chrome,
+                  borderWidth: 1,
+                  borderColor: palette.borderStrong,
+                })}
+              >
+                <Text style={{ color: palette.text, fontSize: 12, fontFamily: monoFont }}>Send</Text>
+              </Pressable>
+            </View>
           </View>
         </GlassSurface>
-      </View>
+      </KeyboardAvoidingView>
     </SwipeTabScreen>
   );
 }
