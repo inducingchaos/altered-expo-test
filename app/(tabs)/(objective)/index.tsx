@@ -4,6 +4,7 @@ import { Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-na
 import * as Haptics from 'expo-haptics';
 
 import { AdaptiveGlass } from '@/components/altered/adaptive-glass';
+import { MobileStackShowcase } from '@/components/altered/mobile-stack-showcase';
 import { useAltered } from '@/features/altered/store';
 
 export default function ObjectiveScreen() {
@@ -167,6 +168,8 @@ export default function ObjectiveScreen() {
           </Text>
         ))}
       </View>
+
+      <MobileStackShowcase />
     </ScrollView>
   );
 }
