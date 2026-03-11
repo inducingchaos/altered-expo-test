@@ -1,4 +1,4 @@
-import { DynamicColorIOS } from 'react-native';
+import { Platform } from 'react-native';
 
 export type ThemeName = 'light' | 'dark';
 
@@ -22,9 +22,10 @@ export type AppPalette = {
   chrome: string;
 };
 
-export const monoFont = DynamicColorIOS
-  ? 'Menlo'
-  : 'monospace';
+export const monoFont = Platform.select({
+  ios: 'Menlo',
+  default: 'monospace',
+}) as string;
 
 export const lightPalette: AppPalette = {
   name: 'light',
