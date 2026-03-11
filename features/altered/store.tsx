@@ -1,72 +1,190 @@
 import React from 'react';
 
-import type { AppState, Objective, ProposedChange, Thought, ThoughtStatus } from './types';
+import type {
+  AppearanceMode,
+  AppState,
+  ChatMessage,
+  Shortcut,
+  SystemMode,
+  Thought,
+  ThoughtStatus,
+  Validation,
+} from './types';
 
 type AlteredContextValue = {
   state: AppState;
   visibleThoughts: Thought[];
   datasetCounts: Array<{ name: string; count: number }>;
-  addThought: (text: string, datasetInput: string) => void;
-  setThoughtStatus: (id: string, status: ThoughtStatus) => void;
+  queueThoughts: Thought[];
+  recentThoughts: Thought[];
+  addThought: (payload: { body: string; datasetInput: string }) => void;
+  updateThoughtStatus: (id: string, status: ThoughtStatus) => void;
   setActiveDataset: (dataset: string | null) => void;
-  updateObjective: (objective: Objective) => void;
-  resolveChange: (id: string, status: ProposedChange['status']) => void;
+  setSearchQuery: (query: string) => void;
+  toggleThoughtPinned: (id: string) => void;
+  toggleThoughtValidated: (id: string) => void;
+  sendChatMessage: (text: string) => void;
+  setAppearanceMode: (mode: AppearanceMode) => void;
 };
 
-const initialState: AppState = {
-  objective: {
-    title: 'Generate first $2k from ALTERED in 14 days',
-    outcome: 'Turn scattered strategy notes into a focused execution system and ship a believable prototype.',
-    timeframe: '14 days',
-    constraints: 'Low budget, solo execution, quality bar must stay high.',
-    successCriteria: 'One usable prototype, one proof artifact, first paid client conversation.',
+const shortcuts: Shortcut[] = [
+  { id: 'capture', label: 'Quick capture', detail: 'Drop any thought into the database.' },
+  { id: 'queue', label: 'Open queue', detail: 'See active, pinned, and blocked work.' },
+  { id: 'chat', label: 'Ask kAI', detail: 'Query ALTERED directly against current context.' },
+];
+
+const validations: Validation[] = [
+  {
+    id: 'v-1',
+    label: 'Tag consistency',
+    detail: 'Two thoughts still use overlapping product-core datasets.',
+    status: 'pending',
   },
-  thoughts: [
-    {
-      id: 't-1',
-      text: 'Clarify objective before importing more context so downstream decisions have an anchor.',
-      datasets: ['objective', 'workflow'],
-      status: 'open',
-      createdAt: '2026-03-11T08:00:00.000Z',
-    },
-    {
-      id: 't-2',
-      text: 'Datasets should stay lightweight and composable, not hard-coded categories.',
-      datasets: ['datasets', 'product-core'],
-      status: 'in-progress',
-      createdAt: '2026-03-11T08:15:00.000Z',
-    },
-    {
-      id: 't-3',
-      text: 'Review queue should keep user in control for trust.',
-      datasets: ['trust', 'proposals'],
-      status: 'open',
-      createdAt: '2026-03-11T08:25:00.000Z',
-    },
-  ],
-  proposedChanges: [
-    {
-      id: 'c-1',
-      title: 'Promote "Clarify Objective" as first command',
-      reason: 'All planning quality depends on objective precision.',
-      status: 'pending',
-    },
-    {
-      id: 'c-2',
-      title: 'Split mobile prototype into Brain / Datasets / Objective',
-      reason: 'Shows durable primitives while preserving campaign-specific workflow.',
-      status: 'pending',
-    },
-  ],
+  {
+    id: 'v-2',
+    label: 'Queue pressure',
+    detail: 'Pinned thoughts are below the preferred working set of five.',
+    status: 'clear',
+  },
+  {
+    id: 'v-3',
+    label: 'Trust surface',
+    detail: 'Action menu language is clean, but destructive options need stronger separation.',
+    status: 'flagged',
+  },
+];
+
+const systemModes: SystemMode[] = [
+  {
+    id: 's-1',
+    name: 'Capture',
+    description: 'Low-friction ingestion for notes, clarifications, and fragments.',
+    command: '/capture --dataset product-core',
+  },
+  {
+    id: 's-2',
+    name: 'Query',
+    description: 'Search thoughts, datasets, and relations with terse retrieval syntax.',
+    command: '/query datasets:trust "review queue"',
+  },
+  {
+    id: 's-3',
+    name: 'Transform',
+    description: 'Turn stored thoughts into plans, validations, or AI-ready prompts.',
+    command: '/transform queued --output actions',
+  },
+  {
+    id: 's-4',
+    name: 'Publish',
+    description: 'Use systems to route context into tasks, docs, or outbound artifacts.',
+    command: '/publish thought:t-103 --target docs',
+  },
+];
+
+const chatMessages: ChatMessage[] = [
+  {
+    id: 'm-1',
+    role: 'assistant',
+    text: 'ALTERED is online. Ask for a recall, transformation, or next-action pass.',
+    createdAt: '2026-03-11T08:30:00.000Z',
+  },
+  {
+    id: 'm-2',
+    role: 'user',
+    text: 'What is the strongest thread around trust in the current thought base?',
+    createdAt: '2026-03-11T08:32:00.000Z',
+  },
+  {
+    id: 'm-3',
+    role: 'assistant',
+    text: 'The dominant trust thread is preserving explicit user approval between transformation and execution.',
+    createdAt: '2026-03-11T08:32:15.000Z',
+  },
+];
+
+const initialThoughts: Thought[] = [
+  {
+    id: 't-101',
+    title: 'Review queue preserves trust',
+    body: 'Any transformation layer should keep an explicit validation step so the user remains the decision-maker before work is sequenced.',
+    datasets: ['trust', 'validations', 'queue'],
+    status: 'active',
+    source: 'strategy vault',
+    createdAt: '2026-03-11T08:00:00.000Z',
+    updatedAt: '2026-03-11T08:00:00.000Z',
+    pinned: true,
+    validated: true,
+  },
+  {
+    id: 't-102',
+    title: 'Datasets stay composable',
+    body: 'Datasets should remain lightweight tags instead of rigid folder hierarchies so the same thought can live in multiple working views.',
+    datasets: ['datasets', 'product-core'],
+    status: 'queued',
+    source: 'notes import',
+    createdAt: '2026-03-11T08:11:00.000Z',
+    updatedAt: '2026-03-11T08:14:00.000Z',
+    pinned: false,
+    validated: false,
+  },
+  {
+    id: 't-103',
+    title: 'Mobile launcher should feel intentional',
+    body: 'The app should borrow Raycast clarity without becoming ornamental: compact typography, controlled contrast, more structure, less softness.',
+    datasets: ['ui', 'product-core'],
+    status: 'active',
+    source: 'design brief',
+    createdAt: '2026-03-11T08:18:00.000Z',
+    updatedAt: '2026-03-11T08:21:00.000Z',
+    pinned: true,
+    validated: false,
+  },
+  {
+    id: 't-104',
+    title: 'kAI needs direct access to context',
+    body: 'Chat should feel like a direct bridge into the thought database, not a detached assistant shell.',
+    datasets: ['kai', 'query', 'systems'],
+    status: 'inbox',
+    source: 'product direction',
+    createdAt: '2026-03-11T08:24:00.000Z',
+    updatedAt: '2026-03-11T08:24:00.000Z',
+    pinned: false,
+    validated: false,
+  },
+  {
+    id: 't-105',
+    title: 'Systems turn storage into leverage',
+    body: 'Capture alone is not enough. Altered needs explicit system surfaces that route thoughts into workflows, prompts, and outputs.',
+    datasets: ['systems', 'automation'],
+    status: 'blocked',
+    source: 'architecture',
+    createdAt: '2026-03-11T08:28:00.000Z',
+    updatedAt: '2026-03-11T08:31:00.000Z',
+    pinned: false,
+    validated: true,
+  },
+];
+
+const initialState: AppState = {
+  thoughts: initialThoughts,
+  searchQuery: '',
   activeDataset: null,
+  validations,
+  shortcuts,
+  chatMessages,
+  systemModes,
+  appearanceMode: 'system',
 };
 
 type Action =
-  | { type: 'add-thought'; text: string; datasets: string[] }
-  | { type: 'set-thought-status'; id: string; status: ThoughtStatus }
+  | { type: 'add-thought'; body: string; datasets: string[] }
+  | { type: 'update-thought-status'; id: string; status: ThoughtStatus }
   | { type: 'set-active-dataset'; dataset: string | null }
-  | { type: 'update-objective'; objective: Objective }
-  | { type: 'resolve-change'; id: string; status: ProposedChange['status'] };
+  | { type: 'set-search-query'; query: string }
+  | { type: 'toggle-thought-pinned'; id: string }
+  | { type: 'toggle-thought-validated'; id: string }
+  | { type: 'send-chat-message'; text: string }
+  | { type: 'set-appearance-mode'; mode: AppearanceMode };
 
 const AlteredContext = React.createContext<AlteredContextValue | null>(null);
 
@@ -78,15 +196,38 @@ function normalizeDatasets(datasetInput: string): string[] {
     .filter((value, index, list) => list.indexOf(value) === index);
 }
 
+function buildTitle(body: string) {
+  const trimmed = body.trim();
+  if (!trimmed) {
+    return 'Untitled thought';
+  }
+
+  const words = trimmed.split(/\s+/).slice(0, 5).join(' ');
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+function withUpdatedThought(state: AppState, id: string, updater: (thought: Thought) => Thought): AppState {
+  return {
+    ...state,
+    thoughts: state.thoughts.map((thought) => (thought.id === id ? updater(thought) : thought)),
+  };
+}
+
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case 'add-thought': {
+      const now = new Date().toISOString();
       const nextThought: Thought = {
         id: `t-${Date.now()}`,
-        text: action.text.trim(),
+        title: buildTitle(action.body),
+        body: action.body.trim(),
         datasets: action.datasets,
-        status: 'open',
-        createdAt: new Date().toISOString(),
+        status: 'inbox',
+        source: 'quick capture',
+        createdAt: now,
+        updatedAt: now,
+        pinned: false,
+        validated: false,
       };
 
       return {
@@ -94,13 +235,12 @@ function reducer(state: AppState, action: Action): AppState {
         thoughts: [nextThought, ...state.thoughts],
       };
     }
-    case 'set-thought-status': {
-      return {
-        ...state,
-        thoughts: state.thoughts.map((thought) =>
-          thought.id === action.id ? { ...thought, status: action.status } : thought
-        ),
-      };
+    case 'update-thought-status': {
+      return withUpdatedThought(state, action.id, (thought) => ({
+        ...thought,
+        status: action.status,
+        updatedAt: new Date().toISOString(),
+      }));
     }
     case 'set-active-dataset': {
       return {
@@ -108,18 +248,49 @@ function reducer(state: AppState, action: Action): AppState {
         activeDataset: action.dataset,
       };
     }
-    case 'update-objective': {
+    case 'set-search-query': {
       return {
         ...state,
-        objective: action.objective,
+        searchQuery: action.query,
       };
     }
-    case 'resolve-change': {
+    case 'toggle-thought-pinned': {
+      return withUpdatedThought(state, action.id, (thought) => ({
+        ...thought,
+        pinned: !thought.pinned,
+        updatedAt: new Date().toISOString(),
+      }));
+    }
+    case 'toggle-thought-validated': {
+      return withUpdatedThought(state, action.id, (thought) => ({
+        ...thought,
+        validated: !thought.validated,
+        updatedAt: new Date().toISOString(),
+      }));
+    }
+    case 'send-chat-message': {
+      const createdAt = new Date().toISOString();
       return {
         ...state,
-        proposedChanges: state.proposedChanges.map((change) =>
-          change.id === action.id ? { ...change, status: action.status } : change
-        ),
+        chatMessages: [
+          ...state.chatMessages,
+          { id: `m-${Date.now()}`, role: 'user', text: action.text, createdAt },
+          {
+            id: `m-${Date.now()}-reply`,
+            role: 'assistant',
+            text: `ALTERED indexed that request. Strongest matching surfaces: ${state.thoughts
+              .slice(0, 2)
+              .map((thought) => thought.title)
+              .join(' • ')}.`,
+            createdAt,
+          },
+        ],
+      };
+    }
+    case 'set-appearance-mode': {
+      return {
+        ...state,
+        appearanceMode: action.mode,
       };
     }
     default: {
@@ -146,32 +317,56 @@ export function AlteredProvider({ children }: React.PropsWithChildren) {
   }, [state.thoughts]);
 
   const visibleThoughts = React.useMemo(() => {
-    if (!state.activeDataset) {
-      return state.thoughts;
-    }
+    const query = state.searchQuery.trim().toLowerCase();
 
-    return state.thoughts.filter((thought) => thought.datasets.includes(state.activeDataset as string));
-  }, [state.activeDataset, state.thoughts]);
+    return state.thoughts.filter((thought) => {
+      const matchesDataset = state.activeDataset ? thought.datasets.includes(state.activeDataset) : true;
+      const matchesQuery =
+        !query ||
+        thought.title.toLowerCase().includes(query) ||
+        thought.body.toLowerCase().includes(query) ||
+        thought.datasets.some((dataset) => dataset.includes(query));
+
+      return matchesDataset && matchesQuery;
+    });
+  }, [state.activeDataset, state.searchQuery, state.thoughts]);
+
+  const queueThoughts = React.useMemo(
+    () => state.thoughts.filter((thought) => thought.pinned || thought.status === 'active' || thought.status === 'blocked'),
+    [state.thoughts]
+  );
+
+  const recentThoughts = React.useMemo(() => [...state.thoughts].slice(0, 4), [state.thoughts]);
 
   const value = React.useMemo<AlteredContextValue>(
     () => ({
       state,
       visibleThoughts,
       datasetCounts,
-      addThought: (text, datasetInput) => {
+      queueThoughts,
+      recentThoughts,
+      addThought: ({ body, datasetInput }) => {
+        if (!body.trim()) {
+          return;
+        }
+
+        dispatch({ type: 'add-thought', body, datasets: normalizeDatasets(datasetInput) });
+      },
+      updateThoughtStatus: (id, status) => dispatch({ type: 'update-thought-status', id, status }),
+      setActiveDataset: (dataset) => dispatch({ type: 'set-active-dataset', dataset }),
+      setSearchQuery: (query) => dispatch({ type: 'set-search-query', query }),
+      toggleThoughtPinned: (id) => dispatch({ type: 'toggle-thought-pinned', id }),
+      toggleThoughtValidated: (id) => dispatch({ type: 'toggle-thought-validated', id }),
+      sendChatMessage: (text) => {
         if (!text.trim()) {
           return;
         }
 
-        const datasets = normalizeDatasets(datasetInput);
-        dispatch({ type: 'add-thought', text, datasets });
+        dispatch({ type: 'send-chat-message', text: text.trim() });
       },
-      setThoughtStatus: (id, status) => dispatch({ type: 'set-thought-status', id, status }),
-      setActiveDataset: (dataset) => dispatch({ type: 'set-active-dataset', dataset }),
-      updateObjective: (objective) => dispatch({ type: 'update-objective', objective }),
-      resolveChange: (id, status) => dispatch({ type: 'resolve-change', id, status }),
+      setAppearanceMode: (mode) => dispatch({ type: 'set-appearance-mode', mode }),
     }),
-    [datasetCounts, state, visibleThoughts]
+    [datasetCounts, queueThoughts, recentThoughts, state, visibleThoughts]
   );
 
   return <AlteredContext.Provider value={value}>{children}</AlteredContext.Provider>;

@@ -1,9 +1,9 @@
 import { Text, View } from 'react-native';
 
-export default function BrainScreen() {
+export default function KaiScreen() {
   return (
     <View>
-      <Text>Brain</Text>
+      <Text>kAI</Text>
     </View>
   );
 }

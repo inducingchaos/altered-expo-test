@@ -1,31 +1,54 @@
-export type ThoughtStatus = 'open' | 'in-progress' | 'blocked' | 'done';
+export type ThoughtStatus = 'inbox' | 'active' | 'queued' | 'blocked' | 'archived';
+
+export type AppearanceMode = 'system' | 'light' | 'dark';
 
 export type Thought = {
   id: string;
-  text: string;
+  title: string;
+  body: string;
   datasets: string[];
   status: ThoughtStatus;
+  source: string;
+  createdAt: string;
+  updatedAt: string;
+  pinned: boolean;
+  validated: boolean;
+};
+
+export type Validation = {
+  id: string;
+  label: string;
+  detail: string;
+  status: 'pending' | 'clear' | 'flagged';
+};
+
+export type Shortcut = {
+  id: string;
+  label: string;
+  detail: string;
+};
+
+export type ChatMessage = {
+  id: string;
+  role: 'assistant' | 'user';
+  text: string;
   createdAt: string;
 };
 
-export type Objective = {
-  title: string;
-  outcome: string;
-  timeframe: string;
-  constraints: string;
-  successCriteria: string;
-};
-
-export type ProposedChange = {
+export type SystemMode = {
   id: string;
-  title: string;
-  reason: string;
-  status: 'pending' | 'approved' | 'rejected';
+  name: string;
+  description: string;
+  command: string;
 };
 
 export type AppState = {
-  objective: Objective;
   thoughts: Thought[];
-  proposedChanges: ProposedChange[];
+  searchQuery: string;
   activeDataset: string | null;
+  validations: Validation[];
+  shortcuts: Shortcut[];
+  chatMessages: ChatMessage[];
+  systemModes: SystemMode[];
+  appearanceMode: AppearanceMode;
 };
