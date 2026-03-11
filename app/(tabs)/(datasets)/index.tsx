@@ -1,6 +1,6 @@
 import { AdaptiveGlass } from '@/components/altered/adaptive-glass';
 import { useAltered } from '@/features/altered/store';
-import { Pressable, ScrollView, Text, View } from '@/tw';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
 export default function DatasetsScreen() {
   const { datasetCounts, state, setActiveDataset } = useAltered();
