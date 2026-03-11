@@ -1,0 +1,14 @@
+{
+  "name": "@altered/variable-blur",
+  "version": "0.0.1",
+  "description": "Variable blur native view for iOS",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "keywords": ["expo", "ios", "blur"],
+  "license": "MIT",
+  "peerDependencies": {
+    "expo": "*",
+    "react": "*",
+    "react-native": "*"
+  }
+}

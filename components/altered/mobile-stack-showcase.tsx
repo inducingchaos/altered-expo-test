@@ -1,4 +1,5 @@
 import React from 'react';
+import { type as arktype } from 'arktype';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ActivityIndicator, Alert, Pressable, Text, TextInput, View } from 'react-native';
 import { useForm } from 'react-hook-form';
@@ -20,6 +21,10 @@ type Todo = {
   title: string;
   completed: boolean;
 };
+
+const rpcConfigSchema = arktype({
+  url: 'string.url',
+});
 
 export function MobileStackShowcase() {
   const [storedToken, setStoredToken] = React.useState<string | null>(null);
@@ -59,6 +64,9 @@ export function MobileStackShowcase() {
     void getAuthToken().then(setStoredToken);
   }, []);
 
+  const rpcUrlResult = rpcConfigSchema({ url: RPC_URL });
+  const isRpcUrlValid = !(rpcUrlResult instanceof arktype.errors);
+
   return (
     <View style={{ gap: 10, borderWidth: 2, borderColor: '#111111', borderRadius: 18, padding: 14 }}>
       <Text selectable style={{ fontSize: 13, fontWeight: '800', letterSpacing: 0.7 }}>
@@ -92,6 +100,9 @@ export function MobileStackShowcase() {
       </Text>
       <Text selectable style={{ fontSize: 11, color: '#555555' }}>
         oRPC root query key: {JSON.stringify(rpcUtils.key({ type: 'query' }))}
+      </Text>
+      <Text selectable style={{ fontSize: 11, color: '#555555' }}>
+        arktype check: RPC URL is {isRpcUrlValid ? 'valid' : 'invalid'}
       </Text>
 
       <Text selectable style={{ fontSize: 12, color: '#555555' }}>
