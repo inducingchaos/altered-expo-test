@@ -1,0 +1,27 @@
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/preflight.css' layer(base);
+@import 'tailwindcss/utilities.css';
+
+@layer theme {
+  @theme {
+    --font-mono: ui-monospace;
+    --font-sans: system-ui;
+    --color-altered-ink: #101010;
+    --color-altered-paper: #f7f7f5;
+    --color-altered-muted: #606060;
+  }
+}
+
+@media android {
+  :root {
+    --font-sans: normal;
+    --font-mono: monospace;
+  }
+}
+
+@media ios {
+  :root {
+    --font-sans: system-ui;
+    --font-mono: ui-monospace;
+  }
+}
